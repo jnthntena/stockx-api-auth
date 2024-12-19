@@ -1,0 +1,1 @@
+# stockx-api-auth
