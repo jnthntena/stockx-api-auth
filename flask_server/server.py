@@ -60,6 +60,7 @@ def start_flask_server(queue, event):
     # Check for SSL certificate and key files
     cert_file = 'cert.pem'
     key_file = 'key.pem'
+
     # Generate SSL certificates if not present
     try:
         generate_ssl_certificates(cert_file, key_file)
