@@ -28,7 +28,8 @@ Ensure you have the following installed on your system:
    pip install -r requirements.txt
    ```
 
-3. Generate the required SSL certificate and key files:
+3. SSL certificate and key files:
+- The process of generating the required SSL certificate (`cert.pem`) and key (`key.pem`) is **automated** by this utility. You don't need to manually generate these files unless you prefer to do so. If you do want to manually create the SSL files, you can use the following command:
    ```bash
    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
    ```

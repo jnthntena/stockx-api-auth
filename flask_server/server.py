@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from flask import Flask, request
 
@@ -34,6 +35,24 @@ def create_app(queue):
 
     return app
 
+def generate_ssl_certificates(cert_file, key_file):
+    """Generate SSL certificates if they don't exist."""
+    if not os.path.exists(cert_file) or not os.path.exists(key_file):
+        print("SSL certificate or key not found. Generating new ones...")
+        try:
+            subprocess.run(
+                [
+                    "openssl", "req", "-x509", "-nodes", "-days", "365",
+                    "-newkey", "rsa:2048", "-keyout", key_file, "-out", cert_file,
+                    "-subj", "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+                ],
+                check=True
+            )
+            print("SSL certificates successfully generated.")
+        except Exception as e:
+            print(f"Failed to generate SSL certificates: {e}")
+            raise
+
 def start_flask_server(queue, event):
     """Start the Flask server."""
     app = create_app(queue)
@@ -41,21 +60,15 @@ def start_flask_server(queue, event):
     # Check for SSL certificate and key files
     cert_file = 'cert.pem'
     key_file = 'key.pem'
-    use_ssl = os.path.exists(cert_file) and os.path.exists(key_file)
-
-    if use_ssl:
-        print("SSL certificate and key found. Starting server with SSL.")
-        ssl_context = (cert_file, key_file)
-    else:
-        print(
-            "SSL certificate or key not found.\n"
-            "\nPlease create 'cert.pem' and 'key.pem' files manually using the following command:\n"
-            "\n  openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem\n"
-            "\nExiting server startup."
-        )
+    # Generate SSL certificates if not present
+    try:
+        generate_ssl_certificates(cert_file, key_file)
+    except Exception as e:
         event.set()  # Notify parent process of failure
         return
 
+    ssl_context = (cert_file, key_file)
+    print("Starting server with SSL.")
     try:
         app.run(port=5000, ssl_context=ssl_context)
     except Exception as e:
